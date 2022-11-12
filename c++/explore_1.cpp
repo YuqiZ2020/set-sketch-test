@@ -188,12 +188,13 @@ template<typename C, typename A>
 void test(uint64_t seed, C&& config, const A& aggregationMode) {
 	
 	auto sketch1 = config.create();
-	const uint64_t cardinality = 10000; 
-	aggregationMode.aggregate(sketch, RandomNumbers(seed, cardinality));
+	uint64_t cardinality = 10000; 
+	aggregationMode.aggregate(sketch1, RandomNumbers(seed, cardinality));
 	
 	auto sketch2 = config.create();
-	const uint64_t cardinality = 20000; 
-	aggregationMode.aggregate(sketch, RandomNumbers(seed, cardinality));
+        cardinality = 20000; 
+	aggregationMode.aggregate(sketch2, RandomNumbers(seed, cardinality));
+	/*
 
 	typedef std::remove_reference_t<decltype(config.getEstimator())> estimator_type;
     const estimator_type& estimator = config.getEstimator();
@@ -202,9 +203,9 @@ void test(uint64_t seed, C&& config, const A& aggregationMode) {
     // const size_t numEstimates = estimatorLabels.size();
     // vector<vector<vector<JointEstimationResult>>> estimates(numEstimates, vector<vector<JointEstimationResult>>(numExamples));
     
-    JointEstimationResult res = estimateJointNew(sketch1, sketch2);
-    std::cout << res << endl;
-    
+    JointEstimationResult res = estimator.estimateJointNew(sketch1, sketch2);
+    std::cout << res.getJaccard() << endl;
+	*/
     /*
     ofstream f(getFileName(config, aggregationMode.getDescription()));
     appendInfo(f, config);
@@ -228,14 +229,14 @@ int main(int argc, char* argv[]) {
 
     mt19937_64 dataSeedRng(UINT64_C(0x291be5007a3d06fc));
 
-    test(dataSeedRng(), DummyConfig(), StreamAggregation());
+    // test(dataSeedRng(), DummyConfig(), StreamAggregation());
 
     std::vector<uint64_t> registerSizeExponents = {8, 12};
 
     for(uint64_t registerSizeExponent : registerSizeExponents) {
 
         const uint32_t numRegisters = UINT32_C(1) << registerSizeExponent;
-
+	/*
         test(dataSeedRng(), HyperLogLogConfig<RegistersWithLowerBound<uint8_t>>(registerSizeExponent, 64 - registerSizeExponent), StreamAggregation());
         test(dataSeedRng(), HyperLogLogConfig<Registers<uint8_t>>(registerSizeExponent, 64 - registerSizeExponent), StreamAggregation());
         
@@ -243,8 +244,9 @@ int main(int argc, char* argv[]) {
         
         test(dataSeedRng(), GeneralizedHyperLogLogConfig<RegistersWithLowerBound<uint8_t>>(numRegisters, 2., 62), StreamAggregation());
         test(dataSeedRng(), GeneralizedHyperLogLogConfig<Registers<uint8_t>>(numRegisters, 2., 62), StreamAggregation());
-        
+        */
         test(dataSeedRng(), SetSketchConfig1<RegistersWithLowerBound<uint8_t>>(numRegisters, 2., 20, 62), StreamAggregation());
+	/*
         test(dataSeedRng(), SetSketchConfig2<RegistersWithLowerBound<uint8_t>>(numRegisters, 2., 20, 62), StreamAggregation());
         test(dataSeedRng(), SetSketchConfig1<RegistersWithLowerBound<uint8_t>>(numRegisters, 2., 20, 62), BulkAggregation());
         test(dataSeedRng(), SetSketchConfig2<RegistersWithLowerBound<uint8_t>>(numRegisters, 2., 20, 62), BulkAggregation());
@@ -255,6 +257,6 @@ int main(int argc, char* argv[]) {
         test(dataSeedRng(), SetSketchConfig1<RegistersWithLowerBound<uint8_t>>(numRegisters, 1.001, 20, 62), StreamAggregation());
         test(dataSeedRng(), SetSketchConfig2<RegistersWithLowerBound<uint8_t>>(numRegisters, 1.001, 20, 62), StreamAggregation());
         test(dataSeedRng(), SetSketchConfig1<RegistersWithLowerBound<uint8_t>>(numRegisters, 1.001, 20, 62), BulkAggregation());
-        test(dataSeedRng(), SetSketchConfig2<RegistersWithLowerBound<uint8_t>>(numRegisters, 1.001, 20, 62), BulkAggregation());
+        test(dataSeedRng(), SetSketchConfig2<RegistersWithLowerBound<uint8_t>>(numRegisters, 1.001, 20, 62), BulkAggregation());*/
     }
 }
