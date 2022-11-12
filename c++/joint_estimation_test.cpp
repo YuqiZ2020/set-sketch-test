@@ -39,7 +39,7 @@ using namespace std;
 template<typename C>
 static string getFileName(const C& config) {
     stringstream ss;
-    ss << "data/joint_test(";
+    ss << "data/joint_test/joint_test(";
     appendInfo(ss, config);
     ss << ").csv";
     return ss.str();
@@ -351,7 +351,7 @@ int main(int argc, char* argv[]) {
         const uint32_t registerSize = 1 << registerSizeExponent;
 
         uint64_t r = 10;
-        test(dataSeedRng(), HyperMinHashConfig<Registers<uint32_t>>(registerSizeExponent, 6, r));
+        // test(dataSeedRng(), HyperMinHashConfig<Registers<uint32_t>>(registerSizeExponent, 6, r));
         // const double equivalentBase = std::pow(2., std::pow(2., -static_cast<double>(r)));
 
         test(dataSeedRng(), SetSketchConfig1<RegistersWithLowerBound<uint8_t>>(registerSize, 2., 20, 62));
@@ -363,12 +363,13 @@ int main(int argc, char* argv[]) {
         test(dataSeedRng(), SetSketchConfig2<RegistersWithLowerBound<uint8_t>>(registerSize, 1.2, 20, std::numeric_limits<uint8_t>::max() - 1));
         test(dataSeedRng(), SetSketchConfig2<RegistersWithLowerBound<uint16_t>>(registerSize, 1.001, 20, std::numeric_limits<uint16_t>::max() - 1));
         // test(dataSeedRng(), SetSketchConfig2<RegistersWithLowerBound<uint16_t>>(registerSize, equivalentBase, 20, std::numeric_limits<uint16_t>::max() - 1));
-
+	/*
         test(dataSeedRng(), GeneralizedHyperLogLogConfig<RegistersWithLowerBound<uint8_t>>(registerSize, 2., 62));
         test(dataSeedRng(), GeneralizedHyperLogLogConfig<RegistersWithLowerBound<uint8_t>>(registerSize, 1.2, std::numeric_limits<uint8_t>::max() - 1));
         test(dataSeedRng(), GeneralizedHyperLogLogConfig<RegistersWithLowerBound<uint16_t>>(registerSize, 1.001, std::numeric_limits<uint16_t>::max() - 1));
         // test(dataSeedRng(), GeneralizedHyperLogLogConfig<RegistersWithLowerBound<uint16_t>>(registerSize, equivalentBase, std::numeric_limits<uint16_t>::max() - 1));
 
         test(dataSeedRng(), MinHashConfig(registerSize));
+	*/
     }
 }
