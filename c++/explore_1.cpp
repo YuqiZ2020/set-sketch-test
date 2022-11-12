@@ -194,7 +194,7 @@ void test(uint64_t seed, C&& config, const A& aggregationMode) {
 	auto sketch2 = config.create();
         cardinality = 20000; 
 	aggregationMode.aggregate(sketch2, RandomNumbers(seed, cardinality));
-	/*
+	
 
 	typedef std::remove_reference_t<decltype(config.getEstimator())> estimator_type;
     const estimator_type& estimator = config.getEstimator();
@@ -203,9 +203,8 @@ void test(uint64_t seed, C&& config, const A& aggregationMode) {
     // const size_t numEstimates = estimatorLabels.size();
     // vector<vector<vector<JointEstimationResult>>> estimates(numEstimates, vector<vector<JointEstimationResult>>(numExamples));
     
-    JointEstimationResult res = estimator.estimateJointNew(sketch1, sketch2);
-    std::cout << res.getJaccard() << endl;
-	*/
+    JointEstimationResult res = estimator.estimateJointNew(sketch1.getState(), sketch2.getState());
+    std::cout << res.getJaccard() << std::endl;
     /*
     ofstream f(getFileName(config, aggregationMode.getDescription()));
     appendInfo(f, config);
