@@ -7,3 +7,4 @@ c++/joint_estimation_test.out
 c++/performance_test.out
 c++/bulk_update_test.out
 python/__pycache__
+/data
