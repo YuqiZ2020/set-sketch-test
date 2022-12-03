@@ -8,7 +8,11 @@
 #include <unordered_map>
 #include <cstring>
 #include <assert.h>
+#include <unordered_set>
 using namespace std;
+
+
+// TODO: wrapper for pairwise files
 
 string read_fasta_seq(char* filename) {
     string seq;
@@ -33,6 +37,13 @@ uint64_t kmer_to_int (string kmer){
     // 2 bits per nucleotide, so 64 bit unsigned integer accept k <= 31
     assert(kmer.length() < 32);
     uint64_t token = 1;
+
+    // 00000000000001
+    // 00000000000100
+    // A: 00
+    // C: 01
+    // G: 10
+    // T: 11
 
     for (char c : kmer){
         token <<= 2;
@@ -60,4 +71,16 @@ unordered_map<uint64_t, int> build_kmer_table(string seq, int k){
 }
 
 
+// TODO: BUILD KMER SET
+unordered_set<uint64_t> build_kmer_set(string seq, int k){
+    unordered_set<uint64_t> set;
+
+    for (size_t i = 0; i < seq.length() - k + 1; i++)
+    {
+        string substring = seq.substr(i, k);        
+        int kmer = kmer_to_int(substring);
+        set.insert(kmer);
+    }
+    return set;
+}
 #endif //fasta_utils.hpp

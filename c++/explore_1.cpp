@@ -26,16 +26,17 @@
 #include "sketch.hpp"
 #include "util.hpp"
 #include "wyhash/wyhash.h"
+#include "fasta_utils.hpp"
 
 #include <random>
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <chrono>
+#include <set>
+#include <unordered_set>
 
 using namespace std;
-
-
 
 class DummySketch {
     uint64_t state = 0;
@@ -47,7 +48,6 @@ public:
     uint64_t getState() const {
         return state;
     }
-
 };
 
 class DummyConfig {
@@ -184,46 +184,39 @@ std::vector<uint64_t> getCardinalities(C&& config) {
     return cardinalities;
 }
 
-uint64_t kmerToNum(string s) {
-	int l = s.length();
-	uint64_t d = 0;
-	std::map<char, int> baseToInt = {
-        {'A', 1},
-        {'T', 2},
-        {'C', 3},
-        {'G', 4},
-};
-	if (l < 64) {
-		for (int i = 0; i < l; ++i) {
-			int t = baseToInt(toupper(s[i]));
-			d += (t * i * 10);
-		}
-		return d;
-	}
-	else {
-		cerr << "Kmer too long" << endl;
-		return 0;
-	}
-}
+// uint64_t kmerToNum(string s) {
+// 	int l = s.length();
+// 	uint64_t d = 0;
+// 	std::map<char, int> baseToInt = {
+//         {'A', 1},
+//         {'T', 2},
+//         {'C', 3},
+//         {'G', 4},
+// };
+// 	if (l < 64) {
+// 		for (int i = 0; i < l; ++i) {
+// 			int t = baseToInt(toupper(s[i]));
+// 			d += (t * i * 10);
+// 		}
+// 		return d;
+// 	}
+// 	else {
+// 		cerr << "Kmer too long" << endl;
+// 		return 0;
+// 	}
+// }
 
 template<typename C, typename A>
-void test(uint64_t seed, C&& config, const A& aggregationMode) {
+float test(uint64_t seed, C&& config, unordered_set<uint64_t>&kmer_set1, unordered_set<uint64_t>& kmer_set2) {
 	
 	auto sketch1 = config.create();
-	const uint64_t cardinality = 10000; 
-	# aggregationMode.aggregate(sketch, RandomNumbers(seed, cardinality));
-	
-	for(string s : kmer_set1) {
-		uint64_t d = kmerToNum(s);
-        sketch1.add(d);
+	for(uint64_t i : kmer_set1) {
+        sketch1.add(i);
     }
 	
 	auto sketch2 = config.create();
-	const uint64_t cardinality = 20000; 
-	# aggregationMode.aggregate(sketch, RandomNumbers(seed, cardinality));
-	for(string s : kmer_set1) {
-		uint64_t d = kmerToNum(s);
-        sketch2.add(d);
+	for(uint64_t i : kmer_set2) {
+        sketch2.add(i);
     }
 
 	typedef std::remove_reference_t<decltype(config.getEstimator())> estimator_type;
@@ -231,22 +224,10 @@ void test(uint64_t seed, C&& config, const A& aggregationMode) {
     
     // const vector<string> estimatorLabels = estimator.getJointEstimateLabels();
     // const size_t numEstimates = estimatorLabels.size();
-    // vector<vector<vector<JointEstimationResult>>> estimates(numEstimates, vector<vector<JointEstimationResult>>(numExamples));
+    // vector<vector<vector<JointEstimationResult>>> esti+mates(numEstimates, vector<vector<JointEstimationResult>>(numExamples));
     
     JointEstimationResult res = estimator.estimateJointNew(sketch1.getState(), sketch2.getState());
-    std::cout << res.getJaccard() << std::endl;
-    /*
-    ofstream f(getFileName(config, aggregationMode.getDescription()));
-    appendInfo(f, config);
-    f << "numCycles=" << numCycles << ";";
-    f << "aggregationMode=" << aggregationMode.getDescription() << ";";
-    f << endl;
-    f << "cardinality; avg time in seconds (incl. allocation); avg time in seconds (excl. allocation);sum of consumed states;" << endl;
-    for(uint64_t cardinalityIdx = 0; cardinalityIdx < cardinalities.size(); ++cardinalityIdx) {
-        f << cardinalities[cardinalityIdx] << ";" << recordingTimeSeconds1[cardinalityIdx] << ";" << recordingTimeSeconds2[cardinalityIdx] << ";" << sumOfConsumedStates[cardinalityIdx] << ";" << endl;
-    }
-    f.close();
-    */
+    return res.getJaccard(); 
 }
 
 void appendInfo(std::ostream& os, const DummyConfig& config)
@@ -262,30 +243,43 @@ int main(int argc, char* argv[]) {
 
     std::vector<uint64_t> registerSizeExponents = {8, 12};
 
+    ofstream outputfile; 
+    outputfile.open(argv[3]);
+
     for(uint64_t registerSizeExponent : registerSizeExponents) {
-
         const uint32_t numRegisters = UINT32_C(1) << registerSizeExponent;
-	/*
-        test(dataSeedRng(), HyperLogLogConfig<RegistersWithLowerBound<uint8_t>>(registerSizeExponent, 64 - registerSizeExponent), StreamAggregation());
-        test(dataSeedRng(), HyperLogLogConfig<Registers<uint8_t>>(registerSizeExponent, 64 - registerSizeExponent), StreamAggregation());
-        
-        test(dataSeedRng(), MinHashConfig(numRegisters), StreamAggregation());
-        
-        test(dataSeedRng(), GeneralizedHyperLogLogConfig<RegistersWithLowerBound<uint8_t>>(numRegisters, 2., 62), StreamAggregation());
-        test(dataSeedRng(), GeneralizedHyperLogLogConfig<Registers<uint8_t>>(numRegisters, 2., 62), StreamAggregation());
-        */
-        test(dataSeedRng(), SetSketchConfig1<RegistersWithLowerBound<uint8_t>>(numRegisters, 2., 20, 62), StreamAggregation());
-	/*
-        test(dataSeedRng(), SetSketchConfig2<RegistersWithLowerBound<uint8_t>>(numRegisters, 2., 20, 62), StreamAggregation());
-        test(dataSeedRng(), SetSketchConfig1<RegistersWithLowerBound<uint8_t>>(numRegisters, 2., 20, 62), BulkAggregation());
-        test(dataSeedRng(), SetSketchConfig2<RegistersWithLowerBound<uint8_t>>(numRegisters, 2., 20, 62), BulkAggregation());
 
-        test(dataSeedRng(), GeneralizedHyperLogLogConfig<RegistersWithLowerBound<uint8_t>>(numRegisters, 1.001, 62), StreamAggregation());
-        test(dataSeedRng(), GeneralizedHyperLogLogConfig<Registers<uint8_t>>(numRegisters, 1.001, 62), StreamAggregation());
-        
-        test(dataSeedRng(), SetSketchConfig1<RegistersWithLowerBound<uint8_t>>(numRegisters, 1.001, 20, 62), StreamAggregation());
-        test(dataSeedRng(), SetSketchConfig2<RegistersWithLowerBound<uint8_t>>(numRegisters, 1.001, 20, 62), StreamAggregation());
-        test(dataSeedRng(), SetSketchConfig1<RegistersWithLowerBound<uint8_t>>(numRegisters, 1.001, 20, 62), BulkAggregation());
-        test(dataSeedRng(), SetSketchConfig2<RegistersWithLowerBound<uint8_t>>(numRegisters, 1.001, 20, 62), BulkAggregation());*/
+        // TODO: wrapper for pairs of fasta
+        // pairwise files from directory
+        // run in loop
+
+        string seqA, seqB;
+
+        // FIXME!
+        // fileA = argv[1];
+        // fileB = argv[2];
+
+        seqA = read_fasta_seq(argv[1]);
+        seqB = read_fasta_seq(argv[2]);
+
+        unordered_set<uint64_t> kmerA = build_kmer_set(seqA, 10);
+        unordered_set<uint64_t> kmerB = build_kmer_set(seqB, 10);
+
+        float result = test(dataSeedRng(), SetSketchConfig1<RegistersWithLowerBound<uint8_t>>(numRegisters, 2., 20, 62), kmerA, kmerB);
+
+
+        // Output:
+        // Simple simple text file with three tab-separated columns: first two columns store identifiers of two sequences being compared, and third column has a numerical distance value of this comparison.
+
+        // Example of Text File Format 
+
+        // A   B   8.876
+        // A   C   6.120
+
+        // outputfile << fileA << '\t' << fileB << '\t' << result << endl;
     }
+
+    outputfile.close();
+
+    return 0;
 }
