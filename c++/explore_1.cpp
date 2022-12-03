@@ -206,7 +206,7 @@ std::vector<uint64_t> getCardinalities(C&& config) {
 // 	}
 // }
 
-template<typename C, typename A>
+template<typename C>
 float test(uint64_t seed, C&& config, unordered_set<uint64_t>&kmer_set1, unordered_set<uint64_t>& kmer_set2) {
 	
 	auto sketch1 = config.create();
@@ -262,10 +262,12 @@ int main(int argc, char* argv[]) {
         seqA = read_fasta_seq(argv[1]);
         seqB = read_fasta_seq(argv[2]);
 
-        unordered_set<uint64_t> kmerA = build_kmer_set(seqA, 10);
-        unordered_set<uint64_t> kmerB = build_kmer_set(seqB, 10);
+	int k = 10;
+        unordered_set<uint64_t> kmerA = build_kmer_set(seqA, k);
+        unordered_set<uint64_t> kmerB = build_kmer_set(seqB, k);
 
         float result = test(dataSeedRng(), SetSketchConfig1<RegistersWithLowerBound<uint8_t>>(numRegisters, 2., 20, 62), kmerA, kmerB);
+	cout << result << endl;
 
 
         // Output:
