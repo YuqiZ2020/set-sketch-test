@@ -1,3 +1,7 @@
 [submodule "c++/wyhash"]
 	path = c++/wyhash
 	url = https://github.com/wangyi-fudan/wyhash
+
+[submodule "src/c++/wyhash"]
+	path = src/c++/wyhash
+	url = https://github.com/wangyi-fudan/wyhash
