@@ -184,17 +184,47 @@ std::vector<uint64_t> getCardinalities(C&& config) {
     return cardinalities;
 }
 
+uint64_t kmerToNum(string s) {
+	int l = s.length();
+	uint64_t d = 0;
+	std::map<char, int> baseToInt = {
+        {'A', 1},
+        {'T', 2},
+        {'C', 3},
+        {'G', 4},
+};
+	if (l < 64) {
+		for (int i = 0; i < l; ++i) {
+			int t = baseToInt(toupper(s[i]));
+			d += (t * i * 10);
+		}
+		return d;
+	}
+	else {
+		cerr << "Kmer too long" << endl;
+		return 0;
+	}
+}
+
 template<typename C, typename A>
 void test(uint64_t seed, C&& config, const A& aggregationMode) {
 	
 	auto sketch1 = config.create();
-	uint64_t cardinality = 10000; 
-	aggregationMode.aggregate(sketch1, RandomNumbers(seed, cardinality));
+	const uint64_t cardinality = 10000; 
+	# aggregationMode.aggregate(sketch, RandomNumbers(seed, cardinality));
+	
+	for(string s : kmer_set1) {
+		uint64_t d = kmerToNum(s);
+        sketch1.add(d);
+    }
 	
 	auto sketch2 = config.create();
-        cardinality = 20000; 
-	aggregationMode.aggregate(sketch2, RandomNumbers(seed, cardinality));
-	
+	const uint64_t cardinality = 20000; 
+	# aggregationMode.aggregate(sketch, RandomNumbers(seed, cardinality));
+	for(string s : kmer_set1) {
+		uint64_t d = kmerToNum(s);
+        sketch2.add(d);
+    }
 
 	typedef std::remove_reference_t<decltype(config.getEstimator())> estimator_type;
     const estimator_type& estimator = config.getEstimator();
