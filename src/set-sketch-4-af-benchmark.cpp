@@ -23,9 +23,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-#include "c++/sketch.hpp"
-#include "c++/util.hpp"
-#include "c++/wyhash/wyhash.h"
+#include "set-sketch-paper/c++/sketch.hpp"
+#include "set-sketch-paper/c++/util.hpp"
+#include "set-sketch-paper/c++/wyhash/wyhash.h"
 #include "fasta_utils.hpp"
 
 #include <random>
