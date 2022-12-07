@@ -34,6 +34,7 @@
 #include <iterator>
 #include <limits>
 #include <cmath>
+#include <unordered_map>
 
 #include <boost/math/tools/roots.hpp>
 #include <boost/math/tools/minima.hpp>
