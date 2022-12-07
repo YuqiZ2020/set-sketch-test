@@ -14,10 +14,10 @@ using namespace std;
 
 // TODO: wrapper for pairwise files
 
-string read_fasta_seq(char* filename) {
+string read_fasta_seq(string filename) {
     string seq;
     ifstream inputfile;
-    inputfile.open(filename);
+    inputfile.open(filename.c_str());
 
     string line;
     while (getline(inputfile, line)){
