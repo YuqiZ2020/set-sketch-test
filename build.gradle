@@ -1,0 +1,337 @@
+// Copyright (c) 2012-2021 Dynatrace LLC. All rights reserved.  
+//
+// This software and associated documentation files (the "Software")
+// are being made available by Dynatrace LLC for purposes of
+// illustrating the implementation of certain algorithms which have
+// been published by Dynatrace LLC. Permission is hereby granted,
+// free of charge, to any person obtaining a copy of the Software,
+// to view and use the Software for internal, non-productive,
+// non-commercial purposes only – the Software may not be used to
+// process live data or distributed, sublicensed, modified and/or
+// sold either alone or as part of or in combination with any other
+// software.  
+//
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+ext {
+    paperDir = 'paper'
+    pythonDir = 'python'
+    cppDir = 'c++'
+    wyhashDir = "wyhash"
+    dataDir = 'data'
+    wyhashZipFile = "wyhash_v4.zip"
+    wyhashCppDir = "${cppDir}/${wyhashDir}"
+    wyhashSourceDir = "${wyhashCppDir}/wyhash-wyhash_v4"
+    wyhashHeaderFile = "wyhash.h"
+}
+
+//#########################
+// tests
+//#########################
+   
+task buildBitstreamTestExecutable(type: Exec) {
+    inputs.files "${cppDir}/bitstream_test.cpp", "${cppDir}/bitstream_random.hpp"
+    outputs.files "${cppDir}/bitstream_test.out"
+    standardOutput = new ByteArrayOutputStream()
+    commandLine 'g++','-O3','-std=c++17','-Wall',"${cppDir}/bitstream_test.cpp",'-o',"${cppDir}/bitstream_test.out"
+}
+
+task executeBitstreamTest (type: Exec) {
+    inputs.files "${cppDir}/bitstream_test.out"
+    commandLine "${cppDir}/bitstream_test.out","${dataDir}"
+    dependsOn buildBitstreamTestExecutable
+}
+
+task buildRandomTestExecutable(type: Exec) {
+    inputs.files "${cppDir}/random_test.cpp", "${cppDir}/bitstream_random.hpp","${cppDir}/exponential_distribution.hpp","${wyhashCppDir}/${wyhashHeaderFile}"
+    outputs.files "${cppDir}/random_test.out"
+    standardOutput = new ByteArrayOutputStream()
+    commandLine 'g++','-O3','-std=c++17','-Wall','-DNDEBUG',"${cppDir}/random_test.cpp",'-o',"${cppDir}/random_test.out"
+    //commandLine 'g++','-O3','-std=c++17','-Wall',"${cppDir}/random_test.cpp",'-o',"${cppDir}/random_test.out"
+}
+
+def randomTestFiles = [ \
+    "${dataDir}/boolean.txt", \
+    "${dataDir}/uniformLemire3.txt", \
+    "${dataDir}/uniformLemire11.txt", \
+    "${dataDir}/uniformLemire29.txt", \
+    "${dataDir}/uniformLemire256.txt", \
+    "${dataDir}/uniformLumbroso3.txt", \
+    "${dataDir}/uniformLumbroso11.txt", \
+    "${dataDir}/uniformLumbroso29.txt", \
+    "${dataDir}/uniformLumbroso256.txt", \
+    "${dataDir}/intPow3.txt", \
+    "${dataDir}/intPow8.txt", \
+    "${dataDir}/expZiggurat.txt", \
+    "${dataDir}/expStandard.txt", \
+    "${dataDir}/uniformDouble.txt", \
+    "${dataDir}/uniformDoubleHalf.txt", \
+    "${dataDir}/bernoulliReal0_2.txt", \
+    "${dataDir}/bernoulliRatio1_3.txt", \
+    "${dataDir}/truncatedExp0.txt", \
+    "${dataDir}/truncatedExp0_1.txt", \
+    "${dataDir}/truncatedExp0_5.txt", \
+    "${dataDir}/truncatedExp1.txt", \
+    "${dataDir}/truncatedExp2.txt" ]
+
+def executeRandomTestOutput = "${dataDir}/random_test_calculation_times.txt"
+
+task executeRandomTest (type: Exec) {
+    inputs.files "${cppDir}/random_test.out"
+    outputs.files randomTestFiles
+    doFirst {
+        standardOutput = new FileOutputStream(executeRandomTestOutput)
+    }
+    commandLine "${cppDir}/random_test.out","${dataDir}"
+    dependsOn buildRandomTestExecutable
+}
+
+task performRandomTest (type: Exec) {
+    inputs.files randomTestFiles, "${pythonDir}/random_test.py"
+    outputs.files
+    standardOutput = new ByteArrayOutputStream()
+    commandLine 'python3', "${pythonDir}/random_test.py"
+    dependsOn executeRandomTest
+}
+
+task performTests {
+    group 'Main'
+    dependsOn performRandomTest, executeBitstreamTest
+}
+
+//#########################
+
+
+def header_files = [ "${cppDir}/sketch.hpp","${cppDir}/util.hpp","${cppDir}/bitstream_random.hpp","${cppDir}/exponential_distribution.hpp","${wyhashCppDir}/${wyhashHeaderFile}"]
+
+task buildCardinalityTestExecutable(type: Exec) {
+    inputs.files "${cppDir}/cardinality_test.cpp", header_files
+    outputs.files "${cppDir}/cardinality_test.out"
+    standardOutput = new ByteArrayOutputStream()
+    commandLine 'g++','-O3','-std=c++17','-fopenmp','-Wall',"${cppDir}/cardinality_test.cpp",'-o',"${cppDir}/cardinality_test.out"
+    //commandLine 'g++','-O0','-std=c++17','-fopenmp','-Wall',"${cppDir}/sketch_generation.cpp",'-o',"${cppDir}/sketch_generation.out"
+}
+
+task buildBulkUpdateTestExecutable(type: Exec) {
+    inputs.files "${cppDir}/bulk_update_test.cpp", header_files
+    outputs.files "${cppDir}/bulk_update_test.out"
+    standardOutput = new ByteArrayOutputStream()
+    commandLine 'g++','-O3','-std=c++17','-fopenmp','-Wall',"${cppDir}/bulk_update_test.cpp",'-o',"${cppDir}/bulk_update_test.out"
+}
+
+task buildPerformanceTestExecutable(type: Exec) {
+    inputs.files "${cppDir}/performance_test.cpp", header_files
+    outputs.files "${cppDir}/performance_test.out"
+    standardOutput = new ByteArrayOutputStream()
+    commandLine 'g++','-O3','-std=c++17','-Wall','-DNDEBUG',"${cppDir}/performance_test.cpp",'-o',"${cppDir}/performance_test.out"
+    // commandLine 'g++','-O3','-std=c++17','-Wall',"${cppDir}/performance_test.cpp",'-o',"${cppDir}/performance_test.out"
+}
+
+task buildJointEstimationTestExecutable(type: Exec) {
+    inputs.files "${cppDir}/joint_estimation_test.cpp", header_files
+    outputs.files "${cppDir}/joint_estimation_test.out"
+    standardOutput = new ByteArrayOutputStream()
+    commandLine 'g++','-O3','-std=c++17','-fopenmp','-Wall',"${cppDir}/joint_estimation_test.cpp", '-o',"${cppDir}/joint_estimation_test.out"
+    // commandLine 'g++','-O3','-std=c++17','-Wall',"${cppDir}/joint_estimation_test.cpp",'-o',"${cppDir}/joint_estimation_test.out"
+}
+
+def cardinalityTestResults = [ \
+    "${dataDir}/cardinality_test(name=GeneralizedHyperLogLog;numRegisters=256;q=62;base=2.00000000000000000e+00;a=3.90625000000000000e-03;registerStateType=registers with lower bound;).csv", \
+    "${dataDir}/cardinality_test(name=GeneralizedHyperLogLog;numRegisters=256;q=65534;base=1.00099999999999989e+00;a=3.90625000000000000e-03;registerStateType=registers with lower bound;).csv", \
+    "${dataDir}/cardinality_test(name=GeneralizedHyperLogLog;numRegisters=4096;q=62;base=2.00000000000000000e+00;a=2.44140625000000000e-04;registerStateType=registers with lower bound;).csv", \
+    "${dataDir}/cardinality_test(name=GeneralizedHyperLogLog;numRegisters=4096;q=65534;base=1.00099999999999989e+00;a=2.44140625000000000e-04;registerStateType=registers with lower bound;).csv", \
+    "${dataDir}/cardinality_test(name=SetSketch1;numRegisters=256;q=62;base=2.00000000000000000e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;).csv", \
+    "${dataDir}/cardinality_test(name=SetSketch1;numRegisters=256;q=65534;base=1.00099999999999989e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;).csv", \
+    "${dataDir}/cardinality_test(name=SetSketch1;numRegisters=4096;q=62;base=2.00000000000000000e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;).csv", \
+    "${dataDir}/cardinality_test(name=SetSketch1;numRegisters=4096;q=65534;base=1.00099999999999989e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;).csv", \
+    "${dataDir}/cardinality_test(name=SetSketch2;numRegisters=256;q=62;base=2.00000000000000000e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;).csv", \
+    "${dataDir}/cardinality_test(name=SetSketch2;numRegisters=256;q=65534;base=1.00099999999999989e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;).csv", \
+    "${dataDir}/cardinality_test(name=SetSketch2;numRegisters=4096;q=62;base=2.00000000000000000e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;).csv", \
+    "${dataDir}/cardinality_test(name=SetSketch2;numRegisters=4096;q=65534;base=1.00099999999999989e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;).csv"]
+
+
+def performanceTestResults = [ \
+    "${dataDir}/performance_test(dummy;aggregationMode=stream;).csv", \
+    "${dataDir}/performance_test(name=GeneralizedHyperLogLog;numRegisters=256;q=62;base=1.00099999999999989e+00;a=3.90625000000000000e-03;registerStateType=registers with lower bound;aggregationMode=stream;).csv", \
+    "${dataDir}/performance_test(name=GeneralizedHyperLogLog;numRegisters=256;q=62;base=1.00099999999999989e+00;a=3.90625000000000000e-03;registerStateType=registers;aggregationMode=stream;).csv", \
+    "${dataDir}/performance_test(name=GeneralizedHyperLogLog;numRegisters=256;q=62;base=2.00000000000000000e+00;a=3.90625000000000000e-03;registerStateType=registers with lower bound;aggregationMode=stream;).csv", \
+    "${dataDir}/performance_test(name=GeneralizedHyperLogLog;numRegisters=256;q=62;base=2.00000000000000000e+00;a=3.90625000000000000e-03;registerStateType=registers;aggregationMode=stream;).csv", \
+    "${dataDir}/performance_test(name=GeneralizedHyperLogLog;numRegisters=4096;q=62;base=1.00099999999999989e+00;a=2.44140625000000000e-04;registerStateType=registers with lower bound;aggregationMode=stream;).csv", \
+    "${dataDir}/performance_test(name=GeneralizedHyperLogLog;numRegisters=4096;q=62;base=1.00099999999999989e+00;a=2.44140625000000000e-04;registerStateType=registers;aggregationMode=stream;).csv", \
+    "${dataDir}/performance_test(name=GeneralizedHyperLogLog;numRegisters=4096;q=62;base=2.00000000000000000e+00;a=2.44140625000000000e-04;registerStateType=registers with lower bound;aggregationMode=stream;).csv", \
+    "${dataDir}/performance_test(name=GeneralizedHyperLogLog;numRegisters=4096;q=62;base=2.00000000000000000e+00;a=2.44140625000000000e-04;registerStateType=registers;aggregationMode=stream;).csv", \
+    "${dataDir}/performance_test(name=HyperLogLog;numRegisters=256;q=56;base=2.00000000000000000e+00;a=3.90625000000000000e-03;registerStateType=registers with lower bound;aggregationMode=stream;).csv", \
+    "${dataDir}/performance_test(name=HyperLogLog;numRegisters=256;q=56;base=2.00000000000000000e+00;a=3.90625000000000000e-03;registerStateType=registers;aggregationMode=stream;).csv", \
+    "${dataDir}/performance_test(name=HyperLogLog;numRegisters=4096;q=52;base=2.00000000000000000e+00;a=2.44140625000000000e-04;registerStateType=registers with lower bound;aggregationMode=stream;).csv", \
+    "${dataDir}/performance_test(name=HyperLogLog;numRegisters=4096;q=52;base=2.00000000000000000e+00;a=2.44140625000000000e-04;registerStateType=registers;aggregationMode=stream;).csv", \
+    "${dataDir}/performance_test(name=MinHash;base=1.00000000000000000e+00;numRegisters=256;aggregationMode=stream;).csv", \
+    "${dataDir}/performance_test(name=MinHash;base=1.00000000000000000e+00;numRegisters=4096;aggregationMode=stream;).csv", \
+    "${dataDir}/performance_test(name=SetSketch1;numRegisters=256;q=62;base=1.00099999999999989e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;aggregationMode=bulk;).csv", \
+    "${dataDir}/performance_test(name=SetSketch1;numRegisters=256;q=62;base=1.00099999999999989e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;aggregationMode=stream;).csv", \
+    "${dataDir}/performance_test(name=SetSketch1;numRegisters=256;q=62;base=2.00000000000000000e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;aggregationMode=bulk;).csv", \
+    "${dataDir}/performance_test(name=SetSketch1;numRegisters=256;q=62;base=2.00000000000000000e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;aggregationMode=stream;).csv", \
+    "${dataDir}/performance_test(name=SetSketch1;numRegisters=4096;q=62;base=1.00099999999999989e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;aggregationMode=bulk;).csv", \
+    "${dataDir}/performance_test(name=SetSketch1;numRegisters=4096;q=62;base=1.00099999999999989e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;aggregationMode=stream;).csv", \
+    "${dataDir}/performance_test(name=SetSketch1;numRegisters=4096;q=62;base=2.00000000000000000e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;aggregationMode=bulk;).csv", \
+    "${dataDir}/performance_test(name=SetSketch1;numRegisters=4096;q=62;base=2.00000000000000000e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;aggregationMode=stream;).csv", \
+    "${dataDir}/performance_test(name=SetSketch2;numRegisters=256;q=62;base=1.00099999999999989e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;aggregationMode=bulk;).csv", \
+    "${dataDir}/performance_test(name=SetSketch2;numRegisters=256;q=62;base=1.00099999999999989e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;aggregationMode=stream;).csv", \
+    "${dataDir}/performance_test(name=SetSketch2;numRegisters=256;q=62;base=2.00000000000000000e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;aggregationMode=bulk;).csv", \
+    "${dataDir}/performance_test(name=SetSketch2;numRegisters=256;q=62;base=2.00000000000000000e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;aggregationMode=stream;).csv", \
+    "${dataDir}/performance_test(name=SetSketch2;numRegisters=4096;q=62;base=1.00099999999999989e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;aggregationMode=bulk;).csv", \
+    "${dataDir}/performance_test(name=SetSketch2;numRegisters=4096;q=62;base=1.00099999999999989e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;aggregationMode=stream;).csv", \
+    "${dataDir}/performance_test(name=SetSketch2;numRegisters=4096;q=62;base=2.00000000000000000e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;aggregationMode=bulk;).csv", \
+    "${dataDir}/performance_test(name=SetSketch2;numRegisters=4096;q=62;base=2.00000000000000000e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;aggregationMode=stream;).csv"]
+
+def jointTestResults = [ \
+    "${dataDir}/joint_test(name=GeneralizedHyperLogLog;numRegisters=4096;q=254;base=1.19999999999999996e+00;a=2.44140625000000000e-04;registerStateType=registers with lower bound;).csv", \
+    "${dataDir}/joint_test(name=GeneralizedHyperLogLog;numRegisters=4096;q=62;base=2.00000000000000000e+00;a=2.44140625000000000e-04;registerStateType=registers with lower bound;).csv", \
+    "${dataDir}/joint_test(name=GeneralizedHyperLogLog;numRegisters=4096;q=65534;base=1.00099999999999989e+00;a=2.44140625000000000e-04;registerStateType=registers with lower bound;).csv", \
+    "${dataDir}/joint_test(name=HyperMinHash;numRegisters=4096;base=1.00067713069306641e+00;bucketBits=12;bucketSize=6;subBucketSize=10;registerStateType=registers;).csv", \
+    "${dataDir}/joint_test(name=MinHash;base=1.00000000000000000e+00;numRegisters=4096;).csv", \
+    "${dataDir}/joint_test(name=SetSketch1;numRegisters=4096;q=254;base=1.19999999999999996e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;).csv", \
+    "${dataDir}/joint_test(name=SetSketch1;numRegisters=4096;q=62;base=2.00000000000000000e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;).csv", \
+    "${dataDir}/joint_test(name=SetSketch1;numRegisters=4096;q=65534;base=1.00099999999999989e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;).csv", \
+    "${dataDir}/joint_test(name=SetSketch2;numRegisters=4096;q=254;base=1.19999999999999996e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;).csv", \
+    "${dataDir}/joint_test(name=SetSketch2;numRegisters=4096;q=62;base=2.00000000000000000e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;).csv", \
+    "${dataDir}/joint_test(name=SetSketch2;numRegisters=4096;q=65534;base=1.00099999999999989e+00;a=2.00000000000000000e+01;registerStateType=registers with lower bound;bulkAddFirstAttemptSuccessProbability=9.49999999999999956e-01;).csv"]
+
+def bulkUpdateTestResults = [ \
+    "${dataDir}/data/bulk_update_test(name=SetSketch1;numRegisters=256;q=62;base=2.00000000000000000e+00;a=3.00000000000000000e+01;).csv", \
+    "${dataDir}/data/bulk_update_test(name=SetSketch1;numRegisters=256;q=65534;base=1.00099999999999989e+00;a=3.00000000000000000e+01;).csv", \
+    "${dataDir}/data/bulk_update_test(name=SetSketch2;numRegisters=256;q=62;base=2.00000000000000000e+00;a=3.00000000000000000e+01;).csv", \
+    "${dataDir}/data/bulk_update_test(name=SetSketch2;numRegisters=256;q=65534;base=1.00099999999999989e+00;a=3.00000000000000000e+01;).csv"]
+
+task runCardinalityTest(type: Exec) {
+    group 'Main'
+    inputs.files "${cppDir}/cardinality_test.out"
+    outputs.files cardinalityTestResults
+    standardOutput = new ByteArrayOutputStream()
+    commandLine "${cppDir}/cardinality_test.out"
+    dependsOn buildCardinalityTestExecutable
+}
+
+task runBulkUpdateTest(type: Exec) {
+    group 'Main'
+    inputs.files "${cppDir}/bulk_update_test.out"
+    outputs.files bulkUpdateTestResults
+    standardOutput = new ByteArrayOutputStream()
+    commandLine "${cppDir}/bulk_update_test.out"
+    dependsOn buildBulkUpdateTestExecutable
+}
+
+task runPerformanceTest(type: Exec) {
+    group 'Main'
+    inputs.files "${cppDir}/performance_test.out"
+    outputs.files performanceTestResults
+    standardOutput = new ByteArrayOutputStream()
+    commandLine "${cppDir}/performance_test.out"
+    dependsOn buildPerformanceTestExecutable
+}
+
+task runJointTest(type: Exec) {
+    group 'Main'
+    inputs.files "${cppDir}/joint_estimation_test.out"
+    outputs.files jointTestResults
+    standardOutput = new ByteArrayOutputStream()
+    commandLine "${cppDir}/joint_estimation_test.out"
+    dependsOn buildJointEstimationTestExecutable
+}
+
+
+def figFiles = []
+
+task makeHelperFuncErrorFigure (type: Exec) {
+    inputs.files "${pythonDir}/helper_func_error.py", "${pythonDir}/color_defs.py"
+    outputs.files "${paperDir}/helper_func_error.pdf"
+    commandLine 'python3', "${pythonDir}/helper_func_error.py"
+}
+figFiles += "${paperDir}/helper_func_error.pdf"
+
+task makeExpectedRelativeErrorFigure (type: Exec) {
+    inputs.files "${pythonDir}/expected_relative_error.py", "${pythonDir}/color_defs.py"
+    outputs.files "${paperDir}/expected_relative_error.pdf"
+    commandLine 'python3', "${pythonDir}/expected_relative_error.py"
+}
+figFiles += "${paperDir}/expected_relative_error.pdf"
+
+task makeProbabilityDensitiesFigure (type: Exec) {
+    inputs.files "${pythonDir}/probability_densities.py", "${pythonDir}/color_defs.py"
+    outputs.files "${paperDir}/probability_densities.pdf"
+    commandLine 'python3', "${pythonDir}/probability_densities.py"
+}
+figFiles += "${paperDir}/probability_densities.pdf"
+
+task makeCollisionProbabilityFigure (type: Exec) {
+    inputs.files "${pythonDir}/collision_probability.py", "${pythonDir}/color_defs.py"
+    outputs.files "${paperDir}/collision_probability.pdf","${paperDir}/mse_upperbound_estimation.pdf"
+    commandLine 'python3', "${pythonDir}/collision_probability.py"
+}
+figFiles += "${paperDir}/collision_probability.pdf"
+figFiles += "${paperDir}/mse_upperbound_estimation.pdf"
+
+task makeTheoreticalVarianceFigure (type: Exec) {
+    inputs.files "${pythonDir}/theoretical_variance.py", "${pythonDir}/color_defs.py"
+    outputs.files "${paperDir}/theoretical_variance.pdf"
+    commandLine 'python3', "${pythonDir}/theoretical_variance.py"
+}
+figFiles += "${paperDir}/theoretical_variance.pdf"
+
+def cardinalityFigFiles = [\
+    "${paperDir}/cardinality_ml.pdf", \
+    "${paperDir}/cardinality_simple.pdf"]
+
+task makeCardinalityFigure (type: Exec) {
+    inputs.files cardinalityTestResults, "${pythonDir}/cardinality_error_charts.py", "${pythonDir}/color_defs.py"
+    outputs.files cardinalityFigFiles
+    commandLine 'python3', "${pythonDir}/cardinality_error_charts.py"
+}
+figFiles += cardinalityFigFiles
+
+task makePerformanceFigure (type: Exec) {
+    inputs.files performanceTestResults, "${pythonDir}/performance_charts.py", "${pythonDir}/color_defs.py"
+    outputs.files "${paperDir}/performance.pdf"
+    commandLine 'python3', "${pythonDir}/performance_charts.py"
+}
+figFiles += "${paperDir}/performance.pdf"
+
+
+def jointFigFiles = [\
+    "${paperDir}/joint_GeneralizedHyperLogLog_1000.pdf", \
+    "${paperDir}/joint_GeneralizedHyperLogLog_1000000.pdf", \
+    "${paperDir}/joint_HyperMinHash_1000000_1_0006771306930664.pdf", \
+    "${paperDir}/joint_HyperMinHash_1000_1_0006771306930664.pdf", \
+    "${paperDir}/joint_MinHash_1000000_1_0.pdf", \
+    "${paperDir}/joint_MinHash_1000_1_0.pdf", \
+    "${paperDir}/joint_SetSketch1_1000.pdf", \
+    "${paperDir}/joint_SetSketch1_1000000.pdf", \
+    "${paperDir}/joint_SetSketch2_1000.pdf", \
+    "${paperDir}/joint_SetSketch2_1000000.pdf"]
+
+task makeJointFigures(type: Exec) {
+    inputs.files jointTestResults, "${pythonDir}/joint_charts.py", "${pythonDir}/color_defs.py"
+    outputs.files jointFigFiles
+    commandLine 'python3', "${pythonDir}/joint_charts.py"
+}
+figFiles += jointFigFiles
+
+
+task pdfFigures {
+    group 'Main'
+    dependsOn makeJointFigures, makeCardinalityFigure, makeHelperFuncErrorFigure, makeExpectedRelativeErrorFigure, makeProbabilityDensitiesFigure, makeCollisionProbabilityFigure, makePerformanceFigure, makeTheoreticalVarianceFigure
+}
+
+task buildAll {
+    group 'Main'
+    dependsOn buildRandomTestExecutable, buildBitstreamTestExecutable, buildCardinalityTestExecutable, buildPerformanceTestExecutable, buildJointEstimationTestExecutable, buildBulkUpdateTestExecutable
+}
