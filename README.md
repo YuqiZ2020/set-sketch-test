@@ -35,7 +35,7 @@ This repository adapts the **SetSketch** algorithm to perform alignment free gen
 6. If you want to change different parameters, you can run:
    ```
    g++ -O3 -std=c++17 -fopenmp -Wall src/set-sketch-4-af-w-param.cpp -o benchmark-param.out
-   ./benchmark-param.out data_folder/ output_file.txt num-register base a q k
+   ./benchmark-param.out <data_folder>/ output_file.txt <num-register> <base> <a> <q> <k>
    ```
    for example, 
    ```
