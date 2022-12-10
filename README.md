@@ -41,10 +41,20 @@ This repository adapts the **SetSketch** algorithm to perform alignment free gen
    ```
    ./benchmark-param.out test/ output.txt 12 1.5 20 62 11
    ```
-   
-## MATLAB GUI for SetSketch
 
-See [GUI README](https://github.com/YuqiZ2020/set-sketch-test/tree/master/MATLAB_GUI)
+# MATLAB GUI for SetSketch
 
-## SetSketch
+We implement a simpler version of SetSketch in MATLAB and provides a GUI in the folder MATLAB_GUI. A detailed README about the GUI can be found in the folder.
+
+# Our Contribution
+
+1. src/fasta_utils.hpp are written by Feiyang
+
+2. src/set-sketch-4-af-benchmark.cpp and src/set-sketch-4-af-2-param.cpp are written by Feiyang and Yuqi
+
+3. MATLAB_GUI/* are written by Wenxuan
+
+4. The remaining codes are from https://github.com/dynatrace-research/set-sketch-paper.git
+
+# SetSketch
 The original algorithm by Otmar Ertl was presented in the paper ["SetSketch: Filling the Gap between MinHash and HyperLogLog"](http://vldb.org/pvldb/vol14/p2244-ertl.pdf) which was accepted at [VLDB 2021](https://vldb.org/2021/). An [extended paper version](https://arxiv.org/abs/2101.00314) that includes mathematical proofs and additional results is available on arXiv. The author's [original implementation](https://github.com/dynatrace-research/set-sketch-paper) in C++ and additional Python visualization tools is available on Github.
