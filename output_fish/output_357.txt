@@ -1,0 +1,5 @@
+NC_009060.fasta	NC_009057.fasta	-0
+NC_009060.fasta	NC_013663.fasta	-0
+NC_009060.fasta	NC_011179.fasta	-0
+NC_009060.fasta	NC_018815.fasta	-0
+NC_009060.fasta	NC_009062.fasta	-0
