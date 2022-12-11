@@ -1,0 +1,15 @@
+#!/bin/bash
+
+printf "parameter testing\n" > param_testing_ecoli/q_test/q_test.txt
+
+m=12
+b=1.5
+a=20
+#q=62
+k=11
+for q in 0.1 10 20 30 40 60 80 90 100 110; do 
+    start=$SECONDS
+    ./benchmark-param.out param_test_set/ecoli/ param_testing_ecoli/q_test/output_${q}.txt $m $b $a $q $k
+    duration=$(( SECONDS - start ))
+    printf "%f %d\n" $q $duration >> param_testing_ecoli/a_test/q_test.txt
+done

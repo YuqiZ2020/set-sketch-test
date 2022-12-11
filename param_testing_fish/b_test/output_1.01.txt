@@ -1,0 +1,6 @@
+NC_012055.fasta	NC_011168.fasta	-0
+NC_012055.fasta	NC_009057.fasta	-0
+NC_012055.fasta	NC_018814.fasta	-0
+NC_011168.fasta	NC_009057.fasta	-0
+NC_011168.fasta	NC_018814.fasta	-0
+NC_009057.fasta	NC_018814.fasta	-0
